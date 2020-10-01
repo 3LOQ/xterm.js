@@ -44,7 +44,6 @@ export class Renderer extends Disposable implements IRenderer {
     super();
     const allowTransparency = this._optionsService.options.allowTransparency;
     this._characterJoinerRegistry = new CharacterJoinerRegistry(this._bufferService);
-
     this._renderLayers = [
       new TextRenderLayer(this._screenElement, 0, this._colors, this._characterJoinerRegistry, allowTransparency, this._id, this._bufferService, _optionsService),
       new SelectionRenderLayer(this._screenElement, 1, this._colors, this._id, this._bufferService, _optionsService),
@@ -71,7 +70,9 @@ export class Renderer extends Disposable implements IRenderer {
   }
 
   public dispose(): void {
-    this._renderLayers.forEach(l => l.dispose());
+    for (const l of this._renderLayers) {
+      l.dispose();
+    }
     super.dispose();
     removeTerminalFromCache(this._id);
   }
@@ -87,12 +88,11 @@ export class Renderer extends Disposable implements IRenderer {
 
   public setColors(colors: IColorSet): void {
     this._colors = colors;
-
     // Clear layers and force a full render
-    this._renderLayers.forEach(l => {
+    for (const l of this._renderLayers) {
       l.setColors(this._colors);
       l.reset();
-    });
+    }
   }
 
   public onResize(cols: number, rows: number): void {
@@ -100,7 +100,9 @@ export class Renderer extends Disposable implements IRenderer {
     this._updateDimensions();
 
     // Resize all render layers
-    this._renderLayers.forEach(l => l.resize(this.dimensions));
+    for (const l of this._renderLayers) {
+      l.resize(this.dimensions);
+    }
 
     // Resize the screen
     this._screenElement.style.width = `${this.dimensions.canvasWidth}px`;
@@ -136,7 +138,9 @@ export class Renderer extends Disposable implements IRenderer {
   }
 
   private _runOperation(operation: (layer: IRenderLayer) => void): void {
-    this._renderLayers.forEach(l => operation(l));
+    for (const l of this._renderLayers) {
+      operation(l);
+    }
   }
 
   /**
@@ -144,7 +148,9 @@ export class Renderer extends Disposable implements IRenderer {
    * necessary before queueing up the next one.
    */
   public renderRows(start: number, end: number): void {
-    this._renderLayers.forEach(l => l.onGridChanged(start, end));
+    for (const l of this._renderLayers) {
+      l.onGridChanged(start, end);
+    }
   }
 
   /**

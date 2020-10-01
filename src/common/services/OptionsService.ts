@@ -3,7 +3,7 @@
  * @license MIT
  */
 
-import { IOptionsService, ITerminalOptions, IPartialTerminalOptions } from 'common/services/Services';
+import { IOptionsService, ITerminalOptions, IPartialTerminalOptions, FontWeight } from 'common/services/Services';
 import { EventEmitter, IEvent } from 'common/EventEmitter';
 import { isMac } from 'common/Platform';
 import { clone } from 'common/Clone';
@@ -41,6 +41,7 @@ export const DEFAULT_OPTIONS: ITerminalOptions = Object.freeze({
   macOptionClickForcesSelection: false,
   minimumContrastRatio: 1,
   disableStdin: false,
+  allowProposedApi: true,
   allowTransparency: false,
   tabStopWidth: 8,
   theme: {},
@@ -54,6 +55,8 @@ export const DEFAULT_OPTIONS: ITerminalOptions = Object.freeze({
   termName: 'xterm',
   cancelEvents: false
 });
+
+const FONT_WEIGHT_OPTIONS: Extract<FontWeight, string>[] = ['normal', 'bold', '100', '200', '300', '400', '500', '600', '700', '800', '900'];
 
 /**
  * The set of options that only have an effect when set in the Terminal constructor.
@@ -70,12 +73,16 @@ export class OptionsService implements IOptionsService {
 
   constructor(options: IPartialTerminalOptions) {
     this.options = clone(DEFAULT_OPTIONS);
-    Object.keys(options).forEach(k => {
+    for (const k of Object.keys(options)) {
       if (k in this.options) {
-        const newValue = options[k as keyof IPartialTerminalOptions] as any;
-        this.options[k] = newValue;
+        try {
+          const newValue = options[k as keyof IPartialTerminalOptions] as any;
+          this.options[k] = this._sanitizeAndValidateOption(k, newValue);
+        } catch (e) {
+          console.error(e);
+        }
       }
-    });
+    }
   }
 
   public setOption(key: string, value: any): void {
@@ -104,13 +111,19 @@ export class OptionsService implements IOptionsService {
     switch (key) {
       case 'bellStyle':
       case 'cursorStyle':
-      case 'fontWeight':
-      case 'fontWeightBold':
       case 'rendererType':
       case 'wordSeparator':
         if (!value) {
           value = DEFAULT_OPTIONS[key];
         }
+        break;
+      case 'fontWeight':
+      case 'fontWeightBold':
+        if (typeof value === 'number' && 1 <= value && value <= 1000) {
+          // already valid numeric value
+          break;
+        }
+        value = FONT_WEIGHT_OPTIONS.indexOf(value) !== -1 ? value : DEFAULT_OPTIONS[key];
         break;
       case 'cursorWidth':
         value = Math.floor(value);

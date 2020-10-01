@@ -136,7 +136,7 @@ export interface IServiceIdentifier<T> {
 
 export interface IBrandedService {
   serviceBrand: undefined;
-};
+}
 
 type GetLeadingNonServiceArgs<Args> =
   Args extends [...IBrandedService[]] ? []
@@ -179,7 +179,7 @@ export interface IOptionsService {
   getOption<T>(key: string): T | undefined;
 }
 
-export type FontWeight = 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
+export type FontWeight = 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | number;
 export type LogLevel = 'debug' | 'info' | 'warn' | 'error' | 'off';
 export type RendererType = 'dom' | 'canvas';
 
@@ -218,6 +218,7 @@ export interface IPartialTerminalOptions {
 }
 
 export interface ITerminalOptions {
+  allowProposedApi: boolean;
   allowTransparency: boolean;
   bellSound: string;
   bellStyle: 'none' | 'sound' /* | 'visual' | 'both' */;

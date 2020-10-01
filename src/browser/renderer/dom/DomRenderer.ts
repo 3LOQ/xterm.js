@@ -12,6 +12,7 @@ import { ICharSizeService } from 'browser/services/Services';
 import { IOptionsService, IBufferService } from 'common/services/Services';
 import { EventEmitter, IEvent } from 'common/EventEmitter';
 import { color } from 'browser/Color';
+import { removeElementFromParent } from 'browser/Dom';
 
 const TERMINAL_CLASS_PREFIX = 'xterm-dom-renderer-owner-';
 const ROW_CONTAINER_CLASS = 'xterm-rows';
@@ -53,7 +54,6 @@ export class DomRenderer extends Disposable implements IRenderer {
     @IBufferService private readonly _bufferService: IBufferService
   ) {
     super();
-
     this._rowContainer = document.createElement('div');
     this._rowContainer.classList.add(ROW_CONTAINER_CLASS);
     this._rowContainer.style.lineHeight = 'normal';
@@ -95,10 +95,11 @@ export class DomRenderer extends Disposable implements IRenderer {
 
   public dispose(): void {
     this._element.classList.remove(TERMINAL_CLASS_PREFIX + this._terminalClass);
-    this._screenElement.removeChild(this._rowContainer);
-    this._screenElement.removeChild(this._selectionContainer);
-    this._screenElement.removeChild(this._themeStyleElement);
-    this._screenElement.removeChild(this._dimensionsStyleElement);
+
+    // Outside influences such as React unmounts may manipulate the DOM before our disposal.
+    // https://github.com/xtermjs/xterm.js/issues/2960
+    removeElementFromParent(this._rowContainer, this._selectionContainer, this._themeStyleElement, this._dimensionsStyleElement);
+
     super.dispose();
   }
 
@@ -116,13 +117,13 @@ export class DomRenderer extends Disposable implements IRenderer {
     this.dimensions.actualCellWidth = this.dimensions.canvasWidth / this._bufferService.cols;
     this.dimensions.actualCellHeight = this.dimensions.canvasHeight / this._bufferService.rows;
 
-    this._rowElements.forEach(element => {
+    for (const element of this._rowElements) {
       element.style.width = `${this.dimensions.canvasWidth}px`;
       element.style.height = `${this.dimensions.actualCellHeight}px`;
       element.style.lineHeight = `${this.dimensions.actualCellHeight}px`;
       // Make sure rows don't overflow onto following row
       element.style.overflow = 'hidden';
-    });
+    }
 
     if (!this._dimensionsStyleElement) {
       this._dimensionsStyleElement = document.createElement('style');
@@ -224,7 +225,7 @@ export class DomRenderer extends Disposable implements IRenderer {
       `}` +
       `${this._terminalSelector} .${SELECTION_CLASS} div {` +
       ` position: absolute;` +
-      ` background-color: ${this._colors.selection.css};` +
+      ` background-color: ${this._colors.selectionTransparent.css};` +
       `}`;
     // Colors
     this._colors.ansi.forEach((c, i) => {
@@ -305,7 +306,7 @@ export class DomRenderer extends Disposable implements IRenderer {
     } else {
       // Draw first row
       const startCol = viewportStartRow === viewportCappedStartRow ? start[0] : 0;
-      const endCol = viewportCappedStartRow === viewportCappedEndRow ? end[0] : this._bufferService.cols;
+      const endCol = viewportCappedStartRow === viewportEndRow ? end[0] : this._bufferService.cols;
       documentFragment.appendChild(this._createSelectionElement(viewportCappedStartRow, startCol, endCol));
       // Draw middle rows
       const middleRowsCount = viewportCappedEndRow - viewportCappedStartRow - 1;
@@ -346,7 +347,9 @@ export class DomRenderer extends Disposable implements IRenderer {
   }
 
   public clear(): void {
-    this._rowElements.forEach(e => e.innerHTML = '');
+    for (const e of this._rowElements) {
+      e.innerHTML = '';
+    }
   }
 
   public renderRows(start: number, end: number): void {

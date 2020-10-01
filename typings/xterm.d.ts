@@ -11,9 +11,9 @@
 
 declare module 'xterm' {
   /**
-   * A string representing text font weight.
+   * A string or number representing text font weight.
    */
-  export type FontWeight = 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900';
+  export type FontWeight = 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | number;
 
   /**
    * A string representing log level.
@@ -29,6 +29,13 @@ declare module 'xterm' {
    * An object containing start up options for the terminal.
    */
   export interface ITerminalOptions {
+    /**
+     * Whether to allow the use of proposed API. When false, any usage of APIs
+     * marked as experimental/proposed will throw an error. This defaults to
+     * true currently, but will change to false in v5.0.
+     */
+    allowProposedApi?: boolean;
+
     /**
      * Whether background should support non-opaque color. It must be set before
      * executing the `Terminal.open()` method and can't be changed later without
@@ -926,7 +933,7 @@ declare module 'xterm' {
      * Retrieves an option's value from the terminal.
      * @param key The option key.
      */
-    getOption(key: 'bellSound' | 'bellStyle' | 'cursorStyle' | 'fontFamily' | 'fontWeight' | 'fontWeightBold' | 'logLevel' | 'rendererType' | 'termName' | 'wordSeparator'): string;
+    getOption(key: 'bellSound' | 'bellStyle' | 'cursorStyle' | 'fontFamily' | 'logLevel' | 'rendererType' | 'termName' | 'wordSeparator'): string;
     /**
      * Retrieves an option's value from the terminal.
      * @param key The option key.
@@ -937,6 +944,11 @@ declare module 'xterm' {
      * @param key The option key.
      */
     getOption(key: 'cols' | 'fontSize' | 'letterSpacing' | 'lineHeight' | 'rows' | 'tabStopWidth' | 'scrollback'): number;
+    /**
+     * Retrieves an option's value from the terminal.
+     * @param key The option key.
+     */
+    getOption(key: 'fontWeight' | 'fontWeightBold'): FontWeight;
     /**
      * Retrieves an option's value from the terminal.
      * @param key The option key.
@@ -954,7 +966,7 @@ declare module 'xterm' {
     * @param key The option key.
     * @param value The option value.
     */
-    setOption(key: 'fontWeight' | 'fontWeightBold', value: null | 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900'): void;
+    setOption(key: 'fontWeight' | 'fontWeightBold', value: null | 'normal' | 'bold' | '100' | '200' | '300' | '400' | '500' | '600' | '700' | '800' | '900' | number): void;
     /**
     * Sets an option on the terminal.
     * @param key The option key.
@@ -1151,6 +1163,11 @@ declare module 'xterm' {
      * @param text The text of the link.
      */
     leave?(event: MouseEvent, text: string): void;
+
+    /**
+     * Called when the link is released and no longer used by xterm.js.
+     */
+    dispose?(): void;
   }
 
   /**

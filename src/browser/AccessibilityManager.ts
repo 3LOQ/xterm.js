@@ -12,6 +12,7 @@ import { addDisposableDomListener } from 'browser/Lifecycle';
 import { Disposable } from 'common/Lifecycle';
 import { ScreenDprMonitor } from 'browser/ScreenDprMonitor';
 import { IRenderService } from 'browser/services/Services';
+import { removeElementFromParent } from 'browser/Dom';
 
 const MAX_ROWS_TO_READ = 20;
 
@@ -56,7 +57,6 @@ export class AccessibilityManager extends Disposable {
 
     this._rowContainer = document.createElement('div');
     this._rowContainer.classList.add('xterm-accessibility-tree');
-    this._rowContainer.setAttribute('role', 'list');
     this._rowElements = [];
     for (let i = 0; i < this._terminal.rows; i++) {
       this._rowElements[i] = this._createAccessibilityTreeNode();
@@ -106,7 +106,7 @@ export class AccessibilityManager extends Disposable {
 
   public dispose(): void {
     super.dispose();
-    this._terminal.element?.removeChild(this._accessibilityTreeRoot);
+    removeElementFromParent(this._accessibilityTreeRoot);
     this._rowElements.length = 0;
   }
 
@@ -240,9 +240,7 @@ export class AccessibilityManager extends Disposable {
 
     // Only detach/attach on mac as otherwise messages can go unaccounced
     if (isMac) {
-      if (this._liveRegion.parentNode) {
-        this._accessibilityTreeRoot.removeChild(this._liveRegion);
-      }
+      removeElementFromParent(this._liveRegion);
     }
   }
 

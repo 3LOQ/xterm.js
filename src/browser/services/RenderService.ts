@@ -55,6 +55,9 @@ export class RenderService extends Disposable implements IRenderService {
     @IBufferService bufferService: IBufferService
   ) {
     super();
+
+    this.register({ dispose: () => this._renderer.dispose() });
+
     this._renderDebouncer = new RenderDebouncer((start, end) => this._renderRows(start, end));
     this.register(this._renderDebouncer);
 
@@ -83,7 +86,7 @@ export class RenderService extends Disposable implements IRenderService {
   }
 
   private _onIntersectionChange(entry: IntersectionObserverEntry): void {
-    this._isPaused = entry.intersectionRatio === 0;
+    this._isPaused = entry.isIntersecting === undefined ? (entry.intersectionRatio === 0) : !entry.isIntersecting;
     if (!this._isPaused && this._needsFullRefresh) {
       this.refreshRows(0, this._rowCount - 1);
       this._needsFullRefresh = false;
@@ -137,7 +140,6 @@ export class RenderService extends Disposable implements IRenderService {
   }
 
   public dispose(): void {
-    this._renderer.dispose();
     super.dispose();
   }
 
